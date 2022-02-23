@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org/">
+<head th:replace="fragments :: head"></head>
+<body>
+
+<nav th:replace="fragments :: nav-top"></nav>
+<header><h1>My Dashboard</h1></header>
+
+<div th:replace="fragments :: add-clinic-instructions"></div>
+<div th:replace="fragments :: dashboardHeader"></div>
+
+<div th:replace="fragments :: requests"></div>
+
+</body>
+</html>
