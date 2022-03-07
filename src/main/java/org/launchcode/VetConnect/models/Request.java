@@ -5,7 +5,6 @@ import org.springframework.format.annotation.NumberFormat;
 
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -39,14 +38,9 @@ public class Request extends AbstractEntity {
     @NotBlank(message = "Website required")
     private String website;
 
-    private String emergency;
+    private Boolean emergency;
 
     private String status;
-
-    private String claimed;
-
-    @OneToOne
-    private Clinic clinic;
 
     @ManyToOne
     private User user;
@@ -56,7 +50,7 @@ public class Request extends AbstractEntity {
 
     public Request() {};
 
-    public Request(String name, String address, String city, String state, String zip, String phoneNumber, String website, String emergency, String status, User user, String claimed) {
+    public Request(String name, String address, String city, String state, String zip, String phoneNumber, String website, Boolean emergency, String status, User user, String claimed) {
         this.name = name;
         this.address = address;
         this.city = city;
@@ -67,7 +61,6 @@ public class Request extends AbstractEntity {
         this.emergency = emergency;
         this.status = status;
         this.user = user;
-        this.claimed = claimed;
     }
 
     public User getUser() {
@@ -76,14 +69,6 @@ public class Request extends AbstractEntity {
 
     public void setUser(User user) {
         this.user = user;
-    }
-
-    public Clinic getClinic() {
-        return clinic;
-    }
-
-    public void setClinic(Clinic clinic) {
-        this.clinic = clinic;
     }
 
     public String getName() {
@@ -144,11 +129,11 @@ public class Request extends AbstractEntity {
         this.website = website;
     }
 
-    public String getEmergency() {
+    public Boolean getEmergency() {
         return emergency;
     }
 
-    public void setEmergency(String emergency) {
+    public void setEmergency(Boolean emergency) {
         this.emergency = emergency;
     }
 
@@ -166,13 +151,5 @@ public class Request extends AbstractEntity {
 
     public void setCreatedTimestamp(Date createdTimestamp) {
         this.createdTimestamp = createdTimestamp;
-    }
-
-    public String getClaimed() {
-        return claimed;
-    }
-
-    public void setClaimed(String claimed) {
-        this.claimed = claimed;
     }
 }

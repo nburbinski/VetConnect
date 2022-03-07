@@ -11,6 +11,7 @@ public interface ClinicRepository extends CrudRepository<Clinic, Long> {
 
     List<Clinic> findByCityIgnoreCaseContaining(String city);
     List<Clinic> findByStateIgnoreCaseContaining(String state);
+    List<Clinic> findAllByEmergency(boolean emergency);
     Clinic findByName(String name);
 
 }

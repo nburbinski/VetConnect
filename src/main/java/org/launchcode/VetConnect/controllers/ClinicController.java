@@ -1,8 +1,10 @@
 package org.launchcode.VetConnect.controllers;
 
+import org.launchcode.VetConnect.models.Claim;
 import org.launchcode.VetConnect.models.Clinic;
 import org.launchcode.VetConnect.models.Request;
 import org.launchcode.VetConnect.models.User;
+import org.launchcode.VetConnect.models.data.ClaimRepository;
 import org.launchcode.VetConnect.models.data.ClinicRepository;
 import org.launchcode.VetConnect.models.data.RequestRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,9 @@ public class ClinicController extends VetConnectController {
 
     @Autowired
     RequestRepository requestRepository;
+
+    @Autowired
+    ClaimRepository claimRepository;
 
 
     @GetMapping(value = "add-a-clinic")
@@ -61,19 +66,6 @@ public class ClinicController extends VetConnectController {
             return "add-a-clinic";
         }
 
-        if (newRequest.getEmergency() != null) {
-            newRequest.setEmergency("1");
-        } else {
-            newRequest.setEmergency("0");
-        }
-
-
-        if(user.getUserType() == "vet") {
-            newRequest.setClaimed("1");
-        } else {
-            newRequest.setClaimed("0");
-        }
-
         newRequest.setUser(user);
         newRequest.setStatus("Pending");
         newRequest.setPhoneNumber(newRequest.getPhoneNumber().replaceAll("[^0-9]",""));
@@ -91,10 +83,15 @@ public class ClinicController extends VetConnectController {
     public String editClinicForm(Model model, HttpServletRequest request, @RequestParam Long clinicId) {
         User user = getUserFromSession(request.getSession(false));
         Optional<Clinic> clinic = clinicRepository.findById(clinicId);
+        Claim claim = claimRepository.findByClinicIdAndStatus(clinicId, "approved");
 
 
-        if(user == null || (user.getId() != clinic.get().getClaim().getUser().getId())) {
+        if(user == null || claim == null || (user.getId() != claim.getUser().getId())) {
             return "redirect:dashboard";
+        }
+
+        if(!clinic.isPresent()) {
+            return "redirect:error";
         }
 
         model.addAttribute("clinic", clinic.get());
@@ -107,17 +104,27 @@ public class ClinicController extends VetConnectController {
         if(errors.hasErrors()) {
             return "edit-a-clinic";
         }
-        Optional<Clinic> clinicFromDB = clinicRepository.findById(clinicId);
+        Optional<Clinic> optionalClinic = clinicRepository.findById(clinicId);
 
+        if(optionalClinic.isPresent()) {
+            Clinic tempClinic = optionalClinic.get();
 
-        clinicFromDB.get().setName(clinic.getName());
-        clinicFromDB.get().setAddress(clinic.getAddress());
-        clinicFromDB.get().setState(clinic.getState());
-        clinicFromDB.get().setCity(clinic.getCity());
-        clinicFromDB.get().setZip(clinic.getZip());
-        clinicFromDB.get().setWebsite(clinic.getWebsite());
+            tempClinic.setName(clinic.getName());
+            tempClinic.setAddress(clinic.getAddress());
+            tempClinic.setState(clinic.getState());
+            tempClinic.setCity(clinic.getCity());
+            tempClinic.setZip(clinic.getZip());
+            tempClinic.setWebsite(clinic.getWebsite());
+            tempClinic.setPhoneNumber(clinic.getPhoneNumber());
+            tempClinic.setEmergency(clinic.getEmergency());
 
-        clinicRepository.save(clinicFromDB.get());
+            tempClinic.setWebsite(clinic.getWebsite().replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)",""));
+
+            clinicRepository.save(tempClinic);
+
+        } else {
+            return "redirect:error";
+        }
 
         return "redirect:dashboard";
     }

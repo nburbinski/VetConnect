@@ -41,18 +41,15 @@ public class Clinic extends AbstractEntity{
     @NotBlank(message = "Website required")
     private String website;
 
-    private String emergency;
+    private Boolean emergency;
 
     @OneToMany(mappedBy = "clinic")
     private final List<Review> reviews = new ArrayList<>();
-
-    @OneToOne
-    private Claim claim;
-
+  
     public Clinic() {}
 
 //    Initialize the id and value fields
-    public Clinic(String name, String phoneNumber, String address, String city, String state, String zip, String website, String emergency) {
+    public Clinic(String name, String phoneNumber, String address, String city, String state, String zip, String website, Boolean emergency) {
         super();
         this.name = name;
         this.phoneNumber = phoneNumber;
@@ -123,22 +120,16 @@ public class Clinic extends AbstractEntity{
         this.website = website;
     }
 
-    public String getEmergency() {
+    public Boolean getEmergency() {
         return emergency;
     }
 
-    public void setEmergency(String emergency) {
+    public void setEmergency(Boolean emergency) {
         this.emergency = emergency;
     }
 
     public List<Review> getReviews() {
         return reviews;
     }
-    public Claim getClaim() {
-        return claim;
-    }
 
-    public void setClaim(Claim claim) {
-        this.claim = claim;
-    }
 }

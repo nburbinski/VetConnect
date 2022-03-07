@@ -1,9 +1,11 @@
 package org.launchcode.VetConnect.controllers;
 
 
+import org.launchcode.VetConnect.models.Claim;
 import org.launchcode.VetConnect.models.ClinicData;
 import org.launchcode.VetConnect.models.Review;
 import org.launchcode.VetConnect.models.User;
+import org.launchcode.VetConnect.models.data.ClaimRepository;
 import org.launchcode.VetConnect.models.data.ClinicRepository;
 import org.launchcode.VetConnect.models.Clinic;
 import org.launchcode.VetConnect.models.data.ReviewRepository;
@@ -21,14 +23,15 @@ import javax.validation.Valid;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.*;
-import java.util.ArrayList;
-import java.util.List;
 
 @Controller
 public class HomeController extends VetConnectController {
 
     @Autowired
     private ClinicRepository clinicRepository;
+
+    @Autowired
+    private ClaimRepository claimRepository;
 
     @Autowired
     private ReviewRepository reviewRepository;
@@ -40,7 +43,7 @@ public class HomeController extends VetConnectController {
 
 
     @GetMapping(value="search-results")
-    public String displaySearchResults(Model model, @RequestParam String term)
+    public String displaySearchResults(Model model, @RequestParam String term, @RequestParam(required = false) String emergency)
     {
         if (term.isEmpty())
         {
@@ -48,7 +51,14 @@ public class HomeController extends VetConnectController {
         }
         else
         {
-            List<Clinic> results = ClinicData.findClinic(term, clinicRepository.findAll());
+            List<Clinic> results = new ArrayList<>();
+
+            if ((emergency == null)){
+                results = ClinicData.findClinic(term, clinicRepository.findAll());
+            }
+            else {
+                results = ClinicData.findClinic(term, clinicRepository.findAllByEmergency(true));
+            }
 
             if (results.isEmpty()) {
                 model.addAttribute("results_heading", "No search results found for " + term + "");
@@ -67,10 +77,12 @@ public class HomeController extends VetConnectController {
     {
         Optional<Clinic> clinic = clinicRepository.findById(clinicId);
         User user = getUserFromSession(request.getSession(false));
+        Claim claimPending = claimRepository.findByClinicIdAndStatus(clinicId, "pending" );
+        Claim claimApproved = claimRepository.findByClinicIdAndStatus(clinicId, "approved" );
+        String clinicWebsite;
 
         if(clinic.isPresent()) {
             List<Review> reviews = clinic.get().getReviews();
-
 
             if(!(reviews.isEmpty())) {
                 DecimalFormat df = new DecimalFormat("#.##");
@@ -79,7 +91,6 @@ public class HomeController extends VetConnectController {
                 OptionalDouble average = reviews.stream().mapToDouble(a -> a.getReviewRating()).average();
                 model.addAttribute("average", df.format(average.getAsDouble()));
                 model.addAttribute("totalReviews", reviews.size());
-
             }
 
             if(!(user == null)) {
@@ -93,6 +104,24 @@ public class HomeController extends VetConnectController {
 
             model.addAttribute("clinic", clinic.get());
         }
+
+        if(claimApproved != null) {
+            model.addAttribute("claimApproved", true);
+
+            if(user != null && user.getId() == claimApproved.getUser().getId()) {
+                model.addAttribute("vetClaimedClinic", true);
+            }
+        } else if (claimPending != null) {
+            model.addAttribute("claimPending", true);
+        } else {
+            model.addAttribute("noClaim", true);
+
+        }
+
+        clinicWebsite = clinic.get().getWebsite().replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)","");
+        model.addAttribute("clinic", clinic.get());
+        model.addAttribute("clinicWebsite", "http://www." + clinicWebsite );
+
         return "clinic-profile";
     }
 
