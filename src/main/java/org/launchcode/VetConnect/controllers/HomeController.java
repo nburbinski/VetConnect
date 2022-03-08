@@ -9,6 +9,7 @@ import org.launchcode.VetConnect.models.data.ClaimRepository;
 import org.launchcode.VetConnect.models.data.ClinicRepository;
 import org.launchcode.VetConnect.models.Clinic;
 import org.launchcode.VetConnect.models.data.ReviewRepository;
+import org.launchcode.VetConnect.util.StatesData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,6 +27,7 @@ import java.util.*;
 
 @Controller
 public class HomeController extends VetConnectController {
+
 
     @Autowired
     private ClinicRepository clinicRepository;
@@ -45,6 +47,9 @@ public class HomeController extends VetConnectController {
     @GetMapping(value="search-results")
     public String displaySearchResults(Model model, @RequestParam String term, @RequestParam(required = false) String emergency)
     {
+        Map<String, String> states = StatesData.getStatesMap();
+
+
         if (term.isEmpty())
         {
             model.addAttribute("results_heading", "No search results were found.  Please enter a search term.");
@@ -53,12 +58,23 @@ public class HomeController extends VetConnectController {
         {
             List<Clinic> results = new ArrayList<>();
 
-            if ((emergency == null)){
-                results = ClinicData.findClinic(term, clinicRepository.findAll());
+            if(states.containsKey(term)) {
+                if(emergency==null) {
+                    results = clinicRepository.findByStateIgnoreCaseContaining(states.get(term));
+
+                } else {
+                    results = clinicRepository.findByStateIgnoreCaseContainingAndEmergency(states.get(term), true);
+                }
+            } else {
+                if ((emergency == null)){
+                    results = ClinicData.findClinic(term, clinicRepository.findAll());
+                }
+                else {
+                    results = ClinicData.findClinic(term, clinicRepository.findAllByEmergency(true));
+                }
             }
-            else {
-                results = ClinicData.findClinic(term, clinicRepository.findAllByEmergency(true));
-            }
+
+
 
             if (results.isEmpty()) {
                 model.addAttribute("results_heading", "No search results found for " + term + "");
